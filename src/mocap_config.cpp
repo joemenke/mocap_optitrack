@@ -50,6 +50,7 @@
 
 const std::string POSE_TOPIC_PARAM_NAME = "pose";
 const std::string POSE2D_TOPIC_PARAM_NAME = "pose2d";
+const std::string TF_TOPIC_PARAM_NAME = "transform";
 const std::string CHILD_FRAME_ID_PARAM_NAME = "child_frame_id";
 const std::string PARENT_FRAME_ID_PARAM_NAME = "parent_frame_id";
 
@@ -58,6 +59,7 @@ PublishedRigidBody::PublishedRigidBody(XmlRpc::XmlRpcValue &config_node)
   // load configuration for this rigid body from ROS
   publish_pose = validateParam(config_node, POSE_TOPIC_PARAM_NAME);
   publish_pose2d = validateParam(config_node, POSE2D_TOPIC_PARAM_NAME);
+  publish_transform = validateParam(config_node, TF_TOPIC_PARAM_NAME);
   // only publish tf if a frame ID is provided
   publish_tf = (validateParam(config_node, CHILD_FRAME_ID_PARAM_NAME) && 
                validateParam(config_node, PARENT_FRAME_ID_PARAM_NAME));
@@ -72,6 +74,11 @@ PublishedRigidBody::PublishedRigidBody(XmlRpc::XmlRpcValue &config_node)
   {
     pose2d_topic = (std::string&) config_node[POSE2D_TOPIC_PARAM_NAME];
     pose2d_pub = n.advertise<geometry_msgs::Pose2D>(pose2d_topic, 1000);
+  }
+
+  if (publish_transform && publish_tf){
+    transform_topic = (std::string&) config_node[TF_TOPIC_PARAM_NAME];
+    transform_pub = n.advertise<geometry_msgs::TransformStamped>(transform_topic, 1000); 
   }
 
   if (publish_tf)
@@ -136,6 +143,23 @@ void PublishedRigidBody::publish(RigidBody &body)
     transform.setRotation(q);
     ros::Time timestamp(ros::Time::now());
     tf_pub.sendTransform(tf::StampedTransform(transform, timestamp, parent_frame_id, child_frame_id));
+    geometry_msgs::TransformStamped transformStamped;
+  
+    transformStamped.header.stamp = ros::Time::now();
+    transformStamped.header.frame_id = parent_frame_id;
+    transformStamped.child_frame_id = child_frame_id;
+    transformStamped.transform.translation.x = pose.pose.position.x;
+    transformStamped.transform.translation.y = pose.pose.position.y;
+    transformStamped.transform.translation.z = pose.pose.position.z;
+    transformStamped.transform.rotation.x = pose.pose.orientation.x;
+    transformStamped.transform.rotation.y = pose.pose.orientation.y;
+    transformStamped.transform.rotation.z = pose.pose.orientation.z;
+    transformStamped.transform.rotation.w = pose.pose.orientation.w;
+     
+
+    if(publish_transform){
+      transform_pub.publish(transformStamped);
+    }
   }
 }
 

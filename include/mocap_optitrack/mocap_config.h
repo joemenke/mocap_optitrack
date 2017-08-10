@@ -58,17 +58,20 @@ class PublishedRigidBody
 
   std::string pose_topic;
   std::string pose2d_topic;
+  std::string transform_topic;
   std::string parent_frame_id;
   std::string child_frame_id;
 
 
   bool publish_pose;
   bool publish_tf;
+  bool publish_transform;
   bool publish_pose2d;
 
   tf::TransformBroadcaster tf_pub;
   ros::Publisher pose_pub;
   ros::Publisher pose2d_pub;
+  ros::Publisher transform_pub;
 
   bool validateParam(XmlRpc::XmlRpcValue &, const std::string &);
 
